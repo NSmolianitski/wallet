@@ -1,6 +1,6 @@
 ## Запуск
 ```
-docker-compose up
+docker compose up
 ```
 
 ## POST api/v1/wallet
