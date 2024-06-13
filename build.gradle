@@ -1,0 +1,82 @@
+buildscript {
+    dependencies {
+        classpath 'org.postgresql:postgresql:42.7.2'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.0'
+    id 'io.spring.dependency-management' version '1.1.5'
+    id 'org.jooq.jooq-codegen-gradle' version '3.19.6'
+}
+
+def secrets = [
+        'db_host': System.getenv('DB_HOST') ?: 'localhost',
+        'db_port': System.getenv('DB_PORT') ?: '5432',
+        'db_name': System.getenv('DB_NAME') ?: 'database',
+        'db_user': System.getenv('POSTGRES_USER') ?: 'admin',
+        'db_password': System.getenv('POSTGRES_PASSWORD') ?: 'password'
+]
+
+group = 'nsmol'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '17'
+}
+
+bootJar {
+    archiveFileName = 'wallet.jar'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-jooq'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.liquibase:liquibase-core'
+
+    runtimeOnly 'org.postgresql:postgresql'
+    
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+def jooqSourcesPath = layout.projectDirectory.dir('/src/main/java/sources')
+def jooqPackageName = "jooq.generated"
+
+jooq {
+    configuration {
+        jdbc {
+            url = "jdbc:postgresql://${secrets.db_host}:${secrets.db_port}/${secrets.db_name}"
+            user = secrets.db_user
+            password = secrets.db_password
+        }
+        generator {
+            database {
+                inputSchema = 'public'
+            }
+            target {
+                packageName = jooqPackageName
+                directory = jooqSourcesPath
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs += jooqSourcesPath
+        }
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

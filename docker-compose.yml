@@ -1,0 +1,30 @@
+services:
+  wallet:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: database
+      DB_USER: admin
+      DB_PASSWORD: password
+  
+  database:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: database
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      
