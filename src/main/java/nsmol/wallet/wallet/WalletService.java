@@ -2,6 +2,7 @@ package nsmol.wallet.wallet;
 
 import nsmol.wallet.wallet.exceptions.InsufficientFundsException;
 import nsmol.wallet.wallet.exceptions.WalletNotFoundException;
+import org.jooq.exception.DataChangedException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -21,7 +22,8 @@ public class WalletService {
 
     @Transactional
     public Wallet deposit(UUID id, BigDecimal amount) {
-        var walletFromDb = getBalance(id);
+        var walletFromDb = walletRepository.getWalletForUpdate(id)
+                .orElseThrow(() -> new WalletNotFoundException("id: " + id));
         
         var newWallet = Wallet.builder().copyFrom(walletFromDb)
                 .withBalance(walletFromDb.balance().add(amount))
@@ -32,7 +34,8 @@ public class WalletService {
 
     @Transactional
     public Wallet withdraw(UUID id, BigDecimal amount) {
-        var walletFromDb = getBalance(id);
+        var walletFromDb = walletRepository.getWalletForUpdate(id)
+                .orElseThrow(() -> new WalletNotFoundException("id: " + id));
 
         if (walletFromDb.balance().compareTo(amount) < 0) {
             throw new InsufficientFundsException("Insufficient funds"); 

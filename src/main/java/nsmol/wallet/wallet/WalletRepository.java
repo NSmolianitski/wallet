@@ -21,6 +21,14 @@ public class WalletRepository {
                 .where(WALLETS.ID.eq(id))
                 .fetchOptional(WalletRepository::buildWallet);
     }
+
+    public Optional<Wallet> getWalletForUpdate(UUID id) {
+        return db
+                .selectFrom(WALLETS)
+                .where(WALLETS.ID.eq(id))
+                .forUpdate()
+                .fetchOptional(WalletRepository::buildWallet);
+    }
     
     public Wallet updateWallet(Wallet wallet) {
         return db
